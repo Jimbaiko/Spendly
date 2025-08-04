@@ -1,0 +1,128 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
+    --card: 0 0% 100%;
+    --card-foreground: 222.2 84% 4.9%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 222.2 84% 4.9%;
+    --primary: 222.2 47.4% 11.2%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96%;
+    --secondary-foreground: 222.2 47.4% 11.2%;
+    --muted: 210 40% 96%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 96%;
+    --accent-foreground: 222.2 47.4% 11.2%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 214.3 31.8% 91.4%;
+    --input: 214.3 31.8% 91.4%;
+    --ring: 222.2 84% 4.9%;
+    --radius: 0.5rem;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
+
+/* Спеціальні стилі для Spendly */
+.spendly-container {
+  @apply max-w-md mx-auto bg-white min-h-screen;
+}
+
+.spendly-header {
+  @apply bg-blue-600 text-white p-4 text-center;
+}
+
+.spendly-card {
+  @apply p-4 bg-gray-50 rounded-lg shadow-sm;
+}
+
+.spendly-button {
+  @apply px-4 py-2 rounded font-medium transition-colors;
+}
+
+.spendly-button-primary {
+  @apply bg-blue-600 text-white hover:bg-blue-700;
+}
+
+.spendly-button-danger {
+  @apply bg-red-500 text-white hover:bg-red-600;
+}
+
+.spendly-button-success {
+  @apply bg-green-500 text-white hover:bg-green-600;
+}
+
+.spendly-input {
+  @apply w-full p-2 border border-gray-300 rounded focus:ring-2 focus:ring-blue-500 focus:border-transparent;
+}
+
+.spendly-progress {
+  @apply w-full bg-gray-200 rounded-full h-2;
+}
+
+.spendly-progress-bar {
+  @apply bg-blue-600 h-2 rounded-full transition-all duration-300;
+}
+
+/* Мобільна оптимізація */
+@media (max-width: 640px) {
+  .spendly-container {
+    @apply mx-0 rounded-none;
+  }
+}
+
+/* PWA стилі */
+@media (display-mode: standalone) {
+  body {
+    @apply select-none;
+  }
+  
+  .spendly-header {
+    @apply pt-safe-area-inset-top;
+  }
+}
+
+/* Анімації */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(10px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+.spendly-fade-in {
+  animation: fadeIn 0.3s ease-out;
+}
+
+/* Спеціальні кольори для типів витрат */
+.expense-manual {
+  @apply border-l-4 border-gray-400;
+}
+
+.expense-monobank {
+  @apply border-l-4 border-blue-500;
+}
+
+/* Стилі для статусів */
+.status-success {
+  @apply text-green-600 bg-green-50;
+}
+
+.status-warning {
+  @apply text-yellow-600 bg-yellow-50;
+}
+
+.status-error {
+  @apply text-red-600 bg-red-50;
+}
