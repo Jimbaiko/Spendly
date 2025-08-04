@@ -1,0 +1,70 @@
+// Prisma схема для Spendly
+// База даних: PostgreSQL
+// Дата створення: 2024
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Модель бюджету користувача
+model Budget {
+  id          String   @id @default(cuid())
+  totalBudget Float    @map("total_budget")
+  endDate     DateTime @map("end_date")
+  dailyLimit  Float    @map("daily_limit")
+  createdAt   DateTime @default(now()) @map("created_at")
+  updatedAt   DateTime @updatedAt @map("updated_at")
+
+  @@map("budgets")
+}
+
+// Модель витрат (ручні + з Монобанка)
+model Expense {
+  id              String    @id @default(cuid())
+  amount          Float
+  note            String?
+  createdAt       DateTime  @default(now()) @map("created_at")
+  updatedAt       DateTime  @updatedAt @map("updated_at")
+  
+  // Поля для інтеграції з Монобанком
+  monobankId      String?   @unique @map("monobank_id")
+  isFromMonobank  Boolean   @default(false) @map("is_from_monobank")
+  merchantName    String?   @map("merchant_name")
+  merchantType    String?   @map("merchant_type")
+  categoryCode    String?   @map("category_code")
+  transactionTime DateTime? @map("transaction_time")
+  cardType        String?   @map("card_type")
+  
+  @@map("expenses")
+}
+
+// Модель налаштувань Монобанка
+model MonobankSettings {
+  id           String    @id @default(cuid())
+  apiToken     String    @map("api_token")
+  accountId    String?   @map("account_id")
+  accountName  String?   @map("account_name")
+  isActive     Boolean   @default(true) @map("is_active")
+  lastSync     DateTime? @map("last_sync")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  
+  @@map("monobank_settings")
+}
+
+// Модель для логування помилок (опціонально)
+model ErrorLog {
+  id        String   @id @default(cuid())
+  message   String
+  stack     String?
+  endpoint  String?
+  userId    String?  @map("user_id")
+  createdAt DateTime @default(now()) @map("created_at")
+  
+  @@map("error_logs")
+}
