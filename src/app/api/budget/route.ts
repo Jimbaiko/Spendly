@@ -94,4 +94,5 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
       { status: 500 }
     )
   }
+ }
 }
