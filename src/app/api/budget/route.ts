@@ -59,7 +59,6 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
     const body = await request.json()
     const validatedData = budgetSchema.parse(body)
 
-    // Find the most recent budget
     const currentBudget = await prisma.budget.findFirst({
       orderBy: { createdAt: 'desc' }
     })
