@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
-import { z } from 'zod'
+import { z, ZodError } from 'zod'
 
 const budgetSchema = z.object({
   totalBudget: z.number().positive(),
@@ -39,7 +39,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ budget }, { status: 201 })
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Неправильні дані', details: error.errors },
         { status: 400 }
@@ -81,7 +81,7 @@ export async function PUT(request: NextRequest): Promise<NextResponse> {
 
     return NextResponse.json({ budget: updatedBudget })
   } catch (error) {
-    if (error instanceof z.ZodError) {
+    if (error instanceof ZodError) {
       return NextResponse.json(
         { error: 'Неправильні дані', details: error.errors },
         { status: 400 }
