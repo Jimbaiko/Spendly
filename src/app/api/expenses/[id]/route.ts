@@ -2,30 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/db'
 import { startOfDay, endOfDay } from 'date-fns'
 
-// DELETE - видалити витрату по ID
+// DELETE
 export async function DELETE(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Record<string, string> }
 ): Promise<NextResponse> {
   try {
-    const { id } = context.params
+    const { id } = params
 
-    // Перевіряємо, чи існує витрата
-    const existingExpense = await prisma.expense.findUnique({
-      where: { id }
-    })
+    const existingExpense = await prisma.expense.findUnique({ where: { id } })
 
     if (!existingExpense) {
-      return NextResponse.json(
-        { error: 'Витрата не знайдена' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Витрата не знайдена' }, { status: 404 })
     }
 
-    // Видаляємо витрату
     await prisma.expense.delete({ where: { id } })
 
-    // Отримуємо оновлену статистику для сьогодні
     const todayExpenses = await prisma.expense.findMany({
       where: {
         createdAt: {
@@ -35,19 +27,9 @@ export async function DELETE(
       }
     })
 
-    const todayAmount = todayExpenses.reduce(
-      (sum, expense) => sum + expense.amount,
-      0
-    )
-
-    // Загальна статистика
+    const todayAmount = todayExpenses.reduce((sum, e) => sum + e.amount, 0)
     const allExpenses = await prisma.expense.findMany()
-    const totalAmount = allExpenses.reduce(
-      (sum, expense) => sum + expense.amount,
-      0
-    )
-
-    // Статистика по джерелах
+    const totalAmount = allExpenses.reduce((sum, e) => sum + e.amount, 0)
     const manualCount = allExpenses.filter(e => !e.isFromMonobank).length
     const monobankCount = allExpenses.filter(e => e.isFromMonobank).length
 
@@ -82,23 +64,18 @@ export async function DELETE(
   }
 }
 
-// GET - отримати конкретну витрату по ID
+// GET
 export async function GET(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Record<string, string> }
 ): Promise<NextResponse> {
   try {
-    const { id } = context.params
+    const { id } = params
 
-    const expense = await prisma.expense.findUnique({
-      where: { id }
-    })
+    const expense = await prisma.expense.findUnique({ where: { id } })
 
     if (!expense) {
-      return NextResponse.json(
-        { error: 'Витрата не знайдена' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Витрата не знайдена' }, { status: 404 })
     }
 
     return NextResponse.json({ expense })
@@ -111,35 +88,26 @@ export async function GET(
   }
 }
 
-// PUT - оновити витрату
+// PUT
 export async function PUT(
   request: NextRequest,
-  context: { params: { id: string } }
+  { params }: { params: Record<string, string> }
 ): Promise<NextResponse> {
   try {
-    const { id } = context.params
+    const { id } = params
     const body = await request.json()
 
-    // Перевіряємо, чи існує витрата
-    const existingExpense = await prisma.expense.findUnique({
-      where: { id }
-    })
+    const existingExpense = await prisma.expense.findUnique({ where: { id } })
 
     if (!existingExpense) {
-      return NextResponse.json(
-        { error: 'Витрата не знайдена' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Витрата не знайдена' }, { status: 404 })
     }
 
-    // Оновлюємо тільки дозволені поля
     const updatedExpense = await prisma.expense.update({
       where: { id },
       data: {
         amount: body.amount ?? existingExpense.amount,
-        note:
-          body.note !== undefined ? body.note : existingExpense.note
-        // Монобанк поля не редагуються
+        note: body.note !== undefined ? body.note : existingExpense.note
       }
     })
 
