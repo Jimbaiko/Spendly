@@ -5,10 +5,10 @@ import { startOfDay, endOfDay } from 'date-fns'
 // DELETE - видалити витрату по ID
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
-    const { id } = params
+    const { id } = context.params
 
     // Перевіряємо, чи існує витрата
     const existingExpense = await prisma.expense.findUnique({
@@ -23,33 +23,37 @@ export async function DELETE(
     }
 
     // Видаляємо витрату
-    await prisma.expense.delete({
-      where: { id }
-    })
+    await prisma.expense.delete({ where: { id } })
 
     // Отримуємо оновлену статистику для сьогодні
     const todayExpenses = await prisma.expense.findMany({
       where: {
         createdAt: {
           gte: startOfDay(new Date()),
-          lte: endOfDay(new Date()),
+          lte: endOfDay(new Date())
         }
       }
     })
-    
-    const todayAmount = todayExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+
+    const todayAmount = todayExpenses.reduce(
+      (sum, expense) => sum + expense.amount,
+      0
+    )
 
     // Загальна статистика
     const allExpenses = await prisma.expense.findMany()
-    const totalAmount = allExpenses.reduce((sum, expense) => sum + expense.amount, 0)
+    const totalAmount = allExpenses.reduce(
+      (sum, expense) => sum + expense.amount,
+      0
+    )
 
     // Статистика по джерелах
     const manualCount = allExpenses.filter(e => !e.isFromMonobank).length
     const monobankCount = allExpenses.filter(e => e.isFromMonobank).length
 
     return NextResponse.json({
-      message: existingExpense.isFromMonobank 
-        ? 'Витрата з Монобанка видалена' 
+      message: existingExpense.isFromMonobank
+        ? 'Витрата з Монобанка видалена'
         : 'Витрата успішно видалена',
       deletedExpense: {
         id: existingExpense.id,
@@ -69,7 +73,6 @@ export async function DELETE(
         }
       }
     })
-
   } catch (error) {
     console.error('Error deleting expense:', error)
     return NextResponse.json(
@@ -79,13 +82,13 @@ export async function DELETE(
   }
 }
 
-// GET - отримати конкретну витрату по ID (опціонально)
+// GET - отримати конкретну витрату по ID
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
-    const { id } = params
+    const { id } = context.params
 
     const expense = await prisma.expense.findUnique({
       where: { id }
@@ -99,7 +102,6 @@ export async function GET(
     }
 
     return NextResponse.json({ expense })
-
   } catch (error) {
     console.error('Error fetching expense:', error)
     return NextResponse.json(
@@ -109,13 +111,13 @@ export async function GET(
   }
 }
 
-// PUT - оновити витрату (опціонально для майбутнього)
+// PUT - оновити витрату
 export async function PUT(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  context: { params: { id: string } }
 ): Promise<NextResponse> {
   try {
-    const { id } = params
+    const { id } = context.params
     const body = await request.json()
 
     // Перевіряємо, чи існує витрата
@@ -134,9 +136,10 @@ export async function PUT(
     const updatedExpense = await prisma.expense.update({
       where: { id },
       data: {
-        amount: body.amount || existingExpense.amount,
-        note: body.note !== undefined ? body.note : existingExpense.note,
-        // Монобанк поля не можна редагувати
+        amount: body.amount ?? existingExpense.amount,
+        note:
+          body.note !== undefined ? body.note : existingExpense.note
+        // Монобанк поля не редагуються
       }
     })
 
@@ -144,7 +147,6 @@ export async function PUT(
       expense: updatedExpense,
       message: 'Витрата успішно оновлена'
     })
-
   } catch (error) {
     console.error('Error updating expense:', error)
     return NextResponse.json(
