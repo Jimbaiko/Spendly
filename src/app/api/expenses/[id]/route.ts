@@ -3,10 +3,7 @@ import { prisma } from '@/lib/db'
 import { startOfDay, endOfDay } from 'date-fns'
 
 // DELETE
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: Record<string, string> }
-): Promise<NextResponse> {
+export async function DELETE(request: NextRequest, { params }: any) {
   try {
     const { id } = params
 
@@ -65,10 +62,7 @@ export async function DELETE(
 }
 
 // GET
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Record<string, string> }
-): Promise<NextResponse> {
+export async function GET(request: NextRequest, { params }: any) {
   try {
     const { id } = params
 
@@ -89,10 +83,7 @@ export async function GET(
 }
 
 // PUT
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Record<string, string> }
-): Promise<NextResponse> {
+export async function PUT(request: NextRequest, { params }: any) {
   try {
     const { id } = params
     const body = await request.json()
