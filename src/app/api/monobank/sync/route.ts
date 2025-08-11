@@ -7,16 +7,16 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!apiToken || !accountId) {
       return NextResponse.json(
-        { error: 'API токен та ID рахунку обов\'язкові' },
+        { error: "API токен та ID рахунку обов'язкові" },
         { status: 400 }
       )
     }
 
     // Розраховуємо дати для синхронізації
     const toDate = Math.floor(Date.now() / 1000)
-    const fromDate = toDate - (days * 24 * 60 * 60)
+    const fromDate = toDate - days * 24 * 60 * 60
 
-    // Отримуємо транзакції з Монобанка через проксі
+    // Отримуємо транзакції з Монобанка
     const response = await fetch('/api/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -35,9 +35,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
 
     if (!response.ok) {
       return NextResponse.json(
-        { 
+        {
           error: 'Помилка синхронізації',
-          details: transactions.errorDescription || 'Невідома помилка'
+          details: transactions.errorDescription || 'Невідома помилка',
         },
         { status: 400 }
       )
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
 
       const existingExpense = await prisma.expense.findUnique({
-        where: { monobankId: transaction.id }
+        where: { monobankId: transaction.id },
       })
 
       if (existingExpense) {
@@ -65,7 +65,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       const expense = await prisma.expense.create({
         data: {
           amount: Math.abs(transaction.amount / 100),
-          note: `${transaction.description}${transaction.comment ? ` - ${transaction.comment}` : ''}`,
+          note: `${transaction.description}${
+            transaction.comment ? ` - ${transaction.comment}` : ''
+          }`,
           monobankId: transaction.id,
           isFromMonobank: true,
           merchantName: transaction.description,
@@ -74,28 +76,37 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
           transactionTime: new Date(transaction.time * 1000),
           cardType: transaction.account || null,
           createdAt: new Date(transaction.time * 1000),
-        }
+        },
       })
 
       addedExpenses.push(expense)
       addedCount++
     }
 
-    // ✅ Тепер працює, бо accountId унікальний
-    await prisma.monobankSettings.upsert({
+    // ✅ Використовуємо id замість accountId у where, бо Prisma вимагає унікальне поле
+    const existingSettings = await prisma.monobankSettings.findFirst({
       where: { accountId },
-      update: {
-        lastSync: new Date(),
-        apiToken,
-        isActive: true,
-      },
-      create: {
-        apiToken,
-        accountId,
-        isActive: true,
-        lastSync: new Date(),
-      }
     })
+
+    if (existingSettings) {
+      await prisma.monobankSettings.update({
+        where: { id: existingSettings.id },
+        data: {
+          lastSync: new Date(),
+          apiToken,
+          isActive: true,
+        },
+      })
+    } else {
+      await prisma.monobankSettings.create({
+        data: {
+          apiToken,
+          accountId,
+          isActive: true,
+          lastSync: new Date(),
+        },
+      })
+    }
 
     return NextResponse.json({
       success: true,
@@ -104,11 +115,10 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         added: addedCount,
         skipped: skippedCount,
         total: transactions.length,
-        period: `${days} днів`
+        period: `${days} днів`,
       },
-      addedExpenses: addedExpenses.slice(0, 5)
+      addedExpenses: addedExpenses.slice(0, 5),
     })
-
   } catch (error) {
     console.error('Monobank sync error:', error)
     return NextResponse.json(
