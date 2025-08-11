@@ -16,7 +16,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     const toDate = Math.floor(Date.now() / 1000)
     const fromDate = toDate - (days * 24 * 60 * 60)
 
-    // Отримуємо транзакції з Монобанка
+    // Отримуємо транзакції з Монобанка через проксі
     const response = await fetch('/api/proxy', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -47,15 +47,12 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     let skippedCount = 0
     const addedExpenses = []
 
-    // Обробляємо тільки витратні транзакції
     for (const transaction of transactions) {
-      // Пропускаємо доходи (позитивні суми)
       if (transaction.amount >= 0) {
         skippedCount++
         continue
       }
 
-      // Перевіряємо, чи не існує вже ця транзакція
       const existingExpense = await prisma.expense.findUnique({
         where: { monobankId: transaction.id }
       })
@@ -65,10 +62,9 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         continue
       }
 
-      // Створюємо нову витрату
       const expense = await prisma.expense.create({
         data: {
-          amount: Math.abs(transaction.amount / 100), // Конвертуємо з копійок та робимо позитивним
+          amount: Math.abs(transaction.amount / 100),
           note: `${transaction.description}${transaction.comment ? ` - ${transaction.comment}` : ''}`,
           monobankId: transaction.id,
           isFromMonobank: true,
@@ -85,7 +81,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       addedCount++
     }
 
-    // Оновлюємо налаштування синхронізації
+    // ✅ Тепер працює, бо accountId унікальний
     await prisma.monobankSettings.upsert({
       where: { accountId },
       update: {
@@ -110,7 +106,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
         total: transactions.length,
         period: `${days} днів`
       },
-      addedExpenses: addedExpenses.slice(0, 5) // Показуємо перші 5 для прикладу
+      addedExpenses: addedExpenses.slice(0, 5)
     })
 
   } catch (error) {
